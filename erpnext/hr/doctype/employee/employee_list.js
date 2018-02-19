@@ -6,4 +6,17 @@ frappe.listview_settings['Employee'] = {
 		indicator[1] = {"Active": "green", "Left": "darkgrey"}[doc.status];
 		return indicator;
 	}
-};
+ };
+
+if(user!="Administrator"){
+frappe.listview_settings['Employee'] = {
+	onload: function(me) {
+		
+		frappe.route_options = {
+			"user_id": user
+		};
+		me.page.set_title(__("Employee"));
+
+	}
+}
+}

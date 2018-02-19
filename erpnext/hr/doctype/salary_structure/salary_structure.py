@@ -11,8 +11,28 @@ from frappe.model.document import Document
 from erpnext.hr.utils import set_employee_name
 
 class SalaryStructure(Document):
+	def get_priority(doc):
+		gross_pay = doc.taxable_income
+		for item in doc.deductions:
+			if item.priority_level == "1":
+				gross_pay -= item.amount
+				item.status = "Deducted"
+				#frappe.msgprint("Gross Pay: " + str(gross_pay))
+			elif item.priority_level == "2" and gross_pay > 3500:
+				gross_pay -= item.amount
+				item.status = "Deducted"
+					#frappe.msgprint("Priority level 2 Gross Pay: " + str(gross_pay))
+			elif item.priority_level == "3" and gross_pay > 3500:
+				gross_pay -= item.amount
+			else:
+				frappe.throw(_("Cannot deduct " + str(item.salary_component) + " if net pay is less than " + frappe.utils.data.fmt_money(3500)))
+				item.status = "Returned"
+				
+		#frappe.msgprint(str(gross_pay))
+		doc.taxable_income = gross_pay
 	
 	def validate(self):
+		self.get_priority()
 		self.validate_amount()
 		for e in self.get('employees'):
 			set_employee_name(e)

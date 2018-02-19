@@ -4,6 +4,7 @@
 from __future__ import unicode_literals
 import frappe, erpnext
 
+from frappe import _
 from frappe.utils import add_days, cint, cstr, flt, getdate, rounded, date_diff, money_in_words
 from frappe.model.naming import make_autoname
 
@@ -13,11 +14,39 @@ from erpnext.hr.doctype.employee.employee import get_holiday_list_for_employee
 from erpnext.utilities.transaction_base import TransactionBase
 from frappe.utils.background_jobs import enqueue
 
+
+
+
+
+	
 class SalarySlip(TransactionBase):
+	def get_priority(doc):
+		gross_pay = doc.gross_pay
+		for item in doc.deductions:
+			if item.priority_level == "1":
+				gross_pay -= item.amount
+				item.status = "Deducted"
+				#frappe.msgprint("Gross Pay: " + str(gross_pay))
+			elif item.priority_level == "2" and gross_pay > 3500:
+				gross_pay -= item.amount
+				item.status = "Deducted"
+					#frappe.msgprint("Priority level 2 Gross Pay: " + str(gross_pay))
+			elif item.priority_level == "3" and gross_pay > 3500:
+				gross_pay -= item.amount
+			else:
+				frappe.throw(_("Cannot deduct " + str(item.salary_component) + " if net pay is less than 3500"))
+				item.status = "Returned"
+				
+		#frappe.msgprint(str(gross_pay))
+		doc.net_pay = gross_pay
+		
+		
+	
 	def autoname(self):
 		self.name = make_autoname('Sal Slip/' +self.employee + '/.#####')
 
 	def validate(self):
+		self.get_priority()
 		self.status = self.get_status()
 		self.validate_dates()
 		self.check_existing()
@@ -31,7 +60,7 @@ class SalarySlip(TransactionBase):
 			self.get_leave_details(lwp = self.leave_without_pay)
 
 		# if self.salary_slip_based_on_timesheet or not self.net_pay:
-		self.calculate_net_pay()
+		# self.calculate_net_pay()
 
 		company_currency = erpnext.get_company_currency(self.company)
 		self.total_in_words = money_in_words(self.rounded_total, company_currency)
@@ -199,7 +228,7 @@ class SalarySlip(TransactionBase):
 			self.get_date_details()
 		self.pull_emp_details()
 		self.get_leave_details()
-		self.calculate_net_pay()
+		# self.calculate_net_pay()
 
 	def add_earning_for_hourly_wages(self, doc, salary_component, amount):
 		row_exists = False

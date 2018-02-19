@@ -4,6 +4,10 @@
 
 cur_frm.add_fetch('employee', 'company', 'company');
 cur_frm.add_fetch('company', 'default_letter_head', 'letter_head');
+cur_frm.add_fetch('category', 'prescribed_withholding_tax', 'tax');
+cur_frm.add_fetch('category', 'percentage', 'percent');
+cur_frm.add_fetch('category', 'highest_amount', 'amount_deducted');
+
 
 
 cur_frm.cscript.onload = function(doc, dt, dn){
@@ -11,6 +15,83 @@ cur_frm.cscript.onload = function(doc, dt, dn){
 	var d_tbl = doc.deductions || [];
 	if (e_tbl.length == 0 && d_tbl.length == 0)
 		return function(r, rt) { refresh_many(['earnings', 'deductions']);};
+}
+frappe.ui.form.on('Salary Detail', {
+	amount: function(frm, cdt, cdn) {
+		solve_total_earnings(frm,cdt,cdn);
+	
+	},
+	earnings_remove: function(frm, cdt, cdn) {
+		solve_total_earnings(frm,cdt,cdn);
+	}
+})
+
+frappe.ui.form.on('Salary Detail Deduction', {
+	amount: function(frm, cdt, cdn) {
+		solve_total_deductions(frm,cdt,cdn);
+
+	},
+	deductions_remove: function(frm, cdt, cdn) {
+		solve_total_deductions(frm,cdt,cdn);
+	}
+})
+
+frappe.ui.form.on('Salary Structure', {
+	total_deductions: function(frm, cdt, cdn) {compute_taxable_income(frm,cdt,cdn); },
+	total_earnings: function(frm, cdt, cdn) {compute_taxable_income(frm,cdt,cdn); },
+	category: function(frm, cdt, cdn){compute_wt_tax(frm, cdt, cdn);}
+})
+
+
+
+frappe.ui.form.on('Salary Structure', {
+	taxable_income: function(frm, cdt, cdn) {compute_wt_tax(frm,cdt,cdn); }
+})
+
+var compute_wt_tax = function(frm,cdt,cdn){
+	var wt_tax=0;
+	var sum1=0;
+	var sum2=0;
+	
+	var comp = frappe.model.get_doc(cdt, cdn);
+	sum1 = flt(comp.taxable_income) - flt(comp.amount_deducted);
+	sum2 = sum1 * flt(comp.percent);
+	wt_tax = sum2 + flt(comp.tax);
+	
+	//console.log(wt_tax);
+	frm.set_value("withholding_tax", wt_tax);
+}
+
+var solve_total_earnings = function(frm,cdt,cdn){
+	var total_earning=0;
+	
+	$.each(frm.doc.earnings || [], function(i, d) {
+		total_earning += flt(d.amount);
+	});
+	console.log(total_earning);	
+	frm.set_value("total_earnings", total_earning);
+	refresh_field('total_earnings');
+	
+}
+
+
+var solve_total_deductions = function(frm,cdt,cdn){
+	var total_deduction=0;
+	
+	$.each(frm.doc.deductions || [], function(i, d) {
+		total_deduction += flt(d.amount);
+	});
+	frm.set_value("total_deductions", total_deduction);
+	refresh_field('total_deductions');
+	
+}
+
+var compute_taxable_income = function(frm,cdt,cdn){
+	var tax_income=0;
+	var comp = frappe.model.get_doc(cdt, cdn);
+	tax_income =  flt(comp.total_earnings) - flt(comp.total_deductions);
+	
+	frm.set_value("taxable_income", tax_income);
 }
 
 frappe.ui.form.on('Salary Structure', {

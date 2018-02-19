@@ -3,6 +3,11 @@
 
 cur_frm.add_fetch('employee', 'company', 'company');
 cur_frm.add_fetch('time_sheet', 'total_hours', 'working_hours');
+cur_frm.add_fetch ('category','prescribed_withholding_tax','prescribed_withholding_tax');
+cur_frm.add_fetch ('category','percentage','percentage');
+cur_frm.add_fetch ('category','highest_amount','amount_deducted');
+
+	
 
 frappe.ui.form.on("Salary Slip", {
 	setup: function(frm) {
@@ -85,9 +90,17 @@ frappe.ui.form.on("Salary Slip", {
 
 		frm.toggle_display(['payment_days', 'total_working_days', 'leave_without_pay'],
 			frm.doc.payroll_frequency!="");
-	}
+	},
 	
+	validate: function(frm, cdt,cdn){
+		compute_wt_tax(frm, cdt, cdn);
+		
+	},
+	category: function(frm, cdt, cdn){
+		compute_wt_tax(frm, cdt, cdn);
+	}
 })
+
 
 frappe.ui.form.on('Salary Detail', {
 	earnings_remove: function(frm, dt, dn) {
@@ -97,6 +110,29 @@ frappe.ui.form.on('Salary Detail', {
 		calculate_all(frm.doc, dt, dn);
 	}
 })
+
+frappe.ui.form.on('Salary Detail Deduction', {
+	deductions_remove: function(frm, dt, dn) {
+		calculate_all(frm.doc, dt, dn);
+	}
+})
+
+
+
+var compute_wt_tax = function(frm,cdt,cdn){
+	var wt_tax=0;
+	var sum1=0;
+	var sum2=0;
+	
+	var comp = frappe.model.get_doc(cdt, cdn);
+	sum1 = flt(comp.net_pay) - flt(comp.amount_deducted);
+	sum2 = sum1 * flt(comp.percentage);
+	wt_tax = sum2 + flt(comp.prescribed_withholding_tax);
+	
+	//console.log(sum1);
+	frm.set_value("withholding_tax", wt_tax);
+}
+
 
 // Get leave details
 //---------------------------------------------------------------------
@@ -133,7 +169,7 @@ cur_frm.cscript.leave_without_pay = function(doc,dt,dn){
 var calculate_all = function(doc, dt, dn) {
 	calculate_earning_total(doc, dt, dn);
 	calculate_ded_total(doc, dt, dn);
-	calculate_net_pay(doc, dt, dn);
+//	calculate_net_pay(doc, dt, dn);
 }
 
 cur_frm.cscript.amount = function(doc,dt,dn){
@@ -147,7 +183,7 @@ cur_frm.cscript.amount = function(doc,dt,dn){
 cur_frm.cscript.depends_on_lwp = function(doc,dt,dn){
 	calculate_earning_total(doc, dt, dn, true);
 	calculate_ded_total(doc, dt, dn, true);
-	calculate_net_pay(doc, dt, dn);
+//	calculate_net_pay(doc, dt, dn);
 	refresh_many(['amount','gross_pay', 'rounded_total', 'net_pay', 'loan_repayment']);
 };
 

@@ -12,7 +12,7 @@ def get_data():
 			},
 			{
 				'label': _('Payroll'),
-				'items': ['Salary Structure', 'Salary Slip', 'Timesheet']
+				'items': ['Salary Structure', 'Salary Slip', 'Timesheet', 'Salary Grade']
 			},
 			{
 				'label': _('Training Events/Results'),

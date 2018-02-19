@@ -155,6 +155,8 @@ has_website_permission = {
 	"Patient Appointment": "erpnext.healthcare.web_form.patient_appointments.patient_appointments.has_website_permission"
 }
 
+
+
 dump_report_map = "erpnext.startup.report_data_map.data_map"
 
 before_tests = "erpnext.setup.utils.before_tests"
@@ -162,6 +164,7 @@ before_tests = "erpnext.setup.utils.before_tests"
 standard_queries = {
 	"Customer": "erpnext.selling.doctype.customer.customer.get_customer_list"
 }
+
 
 doc_events = {
 	"Stock Entry": {
@@ -186,6 +189,11 @@ doc_events = {
 	},
 	'Address': {
 		'validate': 'erpnext.regional.india.utils.validate_gstin_for_india'
+	},
+	'Trip Ticket': {
+		"on_submit": "erpnext.api.createattendance"
+		
+		
 	}
 }
 

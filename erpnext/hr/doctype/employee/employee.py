@@ -56,10 +56,40 @@ class Employee(Document):
 		if self.user_id:
 			self.update_user()
 			self.update_user_permissions()
+			
+
+	
+	# def has_permission(self,doc):
+		# if self.user_id==frappe.session.user:
+			# return True
+		# else:
+			# if frappe.session.user != "Administrator":
+				# frappe.msgprint("test")
+				
+	
+	def onload(self):
+		if self.user_id!=frappe.session.user and frappe.session.user != "Administrator":
+			frappe.throw(("No permission to view employee record"))
+		else:
+			if frappe.session.user == "Administrator":
+				return True
+							
+				
+				
+	# def check(self):
+		# if frappe.session.user == "Administrator":
+				# frappe.msgprint("administrator")
+
+    # def deny(self):
+        # """When no user signed in, redirect to signin page."""
+        # flash('Sign in first.')
+        # return redirect(url_for('signin'))
+			
 
 	def update_user_permissions(self):
 		frappe.permissions.add_user_permission("Employee", self.name, self.user_id)
 		frappe.permissions.set_user_permission_if_allowed("Company", self.company, self.user_id)
+		
 
 	def update_user(self):
 		# add employee role if missing

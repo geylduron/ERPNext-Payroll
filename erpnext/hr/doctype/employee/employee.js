@@ -24,6 +24,8 @@ erpnext.hr.EmployeeController = frappe.ui.form.Controller.extend({
 			}
 		});
 	},
+	
+	
 
 	refresh: function() {
 		var me = this;
@@ -58,8 +60,8 @@ frappe.ui.form.on('Employee',{
 		frm.events.update_contact(frm)
 	},
 	user_id:function(frm){
-		frm.events.update_contact(frm)
-	},
+		frm.events.update_contact(frm);
+},
 	update_contact:function(frm){
 		var prefered_email_fieldname = frappe.model.scrub(frm.doc.prefered_contact_email) || 'user_id';
 		frm.set_value("prefered_email",
